@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.zavodnikov</groupId>
+    <artifactId>maven-base-scala</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.build.timestamp.format>yyyyMMdd.HHmmss</maven.build.timestamp.format>
+        <downloadSources>true</downloadSources>
+        <downloadJavadocs>true</downloadJavadocs>
+
+        <!--
+            LTS release.
+        -->
+        <maven.compiler.release>21</maven.compiler.release>
+        <scala.major.version>3</scala.major.version>
+        <scala.version>${scala.major.version}.3.3</scala.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!--
+                Always provide that library to run Scala code.
+            -->
+            <!-- https://mvnrepository.com/artifact/org.scala-lang/scala3-library -->
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala3-library_3</artifactId>
+                <version>3.4.2</version>
+            </dependency>
+
+            <!--
+                Main test library.
+            -->
+            <!-- https://mvnrepository.com/artifact/org.scalatest/scalatest -->
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_3</artifactId>
+                <version>3.3.0-SNAP4</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!--
+                    To generate flattened POM-file from all parents, resolve the variables and etc.
+                    Ensure that your ".gitignore" has ".flattened-pom.xml".
+                -->
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                    <configuration>
+                        <flattenMode>bom</flattenMode>
+                    </configuration>
+                    <executions>
+                        <!--
+                            Enable flattening.
+                        -->
+                        <execution>
+                            <id>flatten</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>flatten</goal>
+                            </goals>
+                        </execution>
+
+                        <!--
+                            Ensure proper cleanup.
+                        -->
+                        <execution>
+                            <id>flatten.clean</id>
+                            <phase>clean</phase>
+                            <goals>
+                                <goal>clean</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!--
+                    To generate proper archive.
+                    Ensure that you have a file "src/assembly/distribution.xml".
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.6.0</version>
+                    <configuration>
+                        <finalName>${project.artifactId}-${project.version}</finalName>
+                        <appendAssemblyId>false</appendAssemblyId>
+                        <descriptors>
+                            <descriptor>src/assembly/distribution.xml</descriptor>
+                        </descriptors>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!--
+                    To build Scala code from Maven without installation Scala compiler.
+                -->
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>4.9.2</version>
+                    <!--
+                        See:
+                            https://davidb.github.io/scala-maven-plugin/compile-mojo.html
+                    -->
+                    <configuration>
+                        <scalaVersion>${scala.version}</scalaVersion>
+                        <!--
+                            Can be 'Mixed' (default), 'JavaThenScala', or 'ScalaThenJava'.
+                        -->
+                        <compileOrder>Mixed</compileOrder>
+                        <!--
+                            Can be 'all', 'incremental' (default).
+                        -->
+                        <recompileMode>incremental</recompileMode>
+                        <!--
+                        See:
+                            https://docs.scala-lang.org/overviews/compiler-options/
+                        -->
+                        <args>
+                            <arg>--deprecation</arg>
+                            <arg>--explain-types</arg>
+                            <arg>--unchecked</arg>
+                        </args>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>scala-compile</id>
+                            <phase>compile</phase>
+                            <goals>
+                                <goal>compile</goal>
+                                <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
